@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>Kenyan bank directory with official bank paybills, codes and Pesalink participation.</Description>
+    <PackageId>Juza.Banks</PackageId>
+    <PackageTags>kenya;banks;paybill;pesalink;fintech</PackageTags>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+
+</Project>

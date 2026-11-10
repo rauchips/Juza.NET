@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>Curated Kenyan paybill directory sourced from primary public sources.</Description>
+    <PackageId>Juza.Paybills</PackageId>
+    <PackageTags>kenya;paybill;mpesa;fintech</PackageTags>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+
+</Project>
