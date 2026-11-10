@@ -31,10 +31,13 @@ artifacts/
 # ASP.NET Scaffolding
 ScaffoldingReadMe.txt
 
-# NuGet Packages
+## NuGet Packages
 *.nupkg
-# NuGet Symbol Packages
 *.snupkg
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+*.nuget.props
+*.nuget.targets
 
 # dotenv environment variables file
 .env
@@ -56,5 +59,16 @@ CodeCoverage/
 TestResult.xml
 nunit-*.xml
 
-# Rider
-.idea
+## IDE
+.vs/
+.vscode/
+.idea/
+*.swp
+
+## OS
+.DS_Store
+Thumbs.db
+
+## NBGV / tooling
+.nbgv/
+StrykerOutput/
