@@ -1,0 +1,27 @@
+﻿{
+  "$schema": "https://raw.githubusercontent.com/dotnet/Nerdbank.GitVersioning/main/src/NerdBank.GitVersioning/version.schema.json",
+  "version": "0.1-alpha",
+  "publicReleaseRefSpec": [
+    "^refs/heads/main$",
+    "^refs/tags/v\\d+\\.\\d+",
+    "^refs/tags/core-v\\d+\\.\\d+",
+    "^refs/tags/banks-v\\d+\\.\\d+",
+    "^refs/tags/paybills-v\\d+\\.\\d+",
+    "^refs/tags/pesalink-v\\d+\\.\\d+",
+    "^refs/tags/mpesa-v\\d+\\.\\d+"
+  ],
+  "cloudBuild": {
+    "setVersionVariables": true,
+    "buildNumber": {
+      "enabled": true,
+      "includeCommitId": {
+        "when": "nonPublicReleaseOnly",
+        "where": "buildMetadata"
+      }
+    }
+  },
+  "release": {
+    "branchName": "release/v{version}",
+    "firstUnstableTag": "alpha"
+  }
+}
