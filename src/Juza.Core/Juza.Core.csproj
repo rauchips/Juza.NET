@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>Decision engine and shared types for Kenyan payment rails.</Description>
+    <PackageId>Juza.Core</PackageId>
+    <PackageTags>kenya;payments;fintech;decision-engine</PackageTags>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+
+</Project>

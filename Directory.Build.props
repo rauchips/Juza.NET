@@ -1,0 +1,39 @@
+﻿<Project>
+    <PropertyGroup>
+        <!-- Common -->
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <LangVersion>latest</LangVersion>
+        <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+        <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+        <AnalysisLevel>latest</AnalysisLevel>
+        <AnalysisMode>All</AnalysisMode>
+
+        <!-- Multi-targeting for libraries; samples can override -->
+        <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+
+        <!-- Packaging defaults -->
+        <Authors>Benjamin Chipinde</Authors>
+        <Company>Juza.NET</Company>
+        <Copyright>Copyright (c) Benjamin Chipinde</Copyright>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <PackageProjectUrl>https://github.com/rauchips/Juza.NET</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/rauchips/Juza.NET</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+        <PublishRepositoryUrl>true</PublishRepositoryUrl>
+        <EmbedUntrackedSources>true</EmbedUntrackedSources>
+        <IncludeSymbols>true</IncludeSymbols>
+        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+        <ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
+
+        <!-- Keep generated AssemblyInfo out of the way when NBGV supplies version -->
+        <GenerateAssemblyVersionAttribute>false</GenerateAssemblyVersionAttribute>
+        <GenerateAssemblyFileVersionAttribute>false</GenerateAssemblyFileVersionAttribute>
+        <GenerateAssemblyInformationalVersionAttribute>false</GenerateAssemblyInformationalVersionAttribute>
+    </PropertyGroup>
+
+    <!-- Nerdbank.GitVersioning – version comes from version.json + git -->
+    <ItemGroup>
+        <PackageReference Include="Nerdbank.GitVersioning" PrivateAssets="all" />
+    </ItemGroup>
+</Project>
