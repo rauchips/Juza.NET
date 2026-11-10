@@ -1,0 +1,141 @@
+name: Release
+
+# Publishes a single package when a matching tag is pushed.
+# Tag format examples: core-v0.1.0  banks-v0.1.0  paybills-v0.1.0  pesalink-v0.1.0  mpesa-v0.1.0
+#
+# This workflow is intentionally inert until:
+#   1. You have real projects under src/
+#   2. You create a tag that matches the pattern below
+#   3. You configure NuGet Trusted Publishing (or a NUGET_API_KEY secret)
+#
+# It will not run on ordinary pushes or pull requests.
+
+on:
+  push:
+    tags:
+      - 'core-v*'
+      - 'banks-v*'
+      - 'paybills-v*'
+      - 'pesalink-v*'
+      - 'mpesa-v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to release (e.g. core-v0.1.0) – only used for manual runs'
+        required: false
+
+permissions:
+  contents: write          # needed to create a GitHub Release
+  id-token: write          # needed for NuGet Trusted Publishing (OIDC)
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  publish:
+    name: Build, test & publish
+    runs-on: ubuntu-latest
+    environment: release   # protect this environment in repo settings
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve tag and project
+        id: meta
+        run: |
+          TAG="${{ github.ref_name }}"
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" && -n "${{ inputs.tag }}" ]]; then
+            TAG="${{ inputs.tag }}"
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+          # Map tag prefix → project folder
+          case "$TAG" in
+            core-v*)     PROJECT="src/Juza.Core"; PACKAGE_ID="Juza.Core" ;;
+            banks-v*)    PROJECT="src/Juza.Banks"; PACKAGE_ID="Juza.Banks" ;;
+            paybills-v*) PROJECT="src/Juza.Paybills"; PACKAGE_ID="Juza.Paybills" ;;
+            pesalink-v*) PROJECT="src/Juza.Pesalink"; PACKAGE_ID="Juza.Pesalink" ;;
+            mpesa-v*)    PROJECT="src/Juza.Mpesa"; PACKAGE_ID="Juza.Mpesa" ;;
+            *)
+              echo "::error::Unrecognised tag format: $TAG"
+              exit 1
+              ;;
+          esac
+
+          echo "project=$PROJECT" >> "$GITHUB_OUTPUT"
+          echo "package_id=$PACKAGE_ID" >> "$GITHUB_OUTPUT"
+          echo "Releasing $PACKAGE_ID from $PROJECT (tag $TAG)"
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --configuration Release --no-restore -p:TreatWarningsAsErrors=true
+
+      - name: Test
+        run: dotnet test --configuration Release --no-build --verbosity normal
+
+      - name: Pack
+        run: |
+          mkdir -p artifacts
+          dotnet pack "${{ steps.meta.outputs.project }}" \
+            --configuration Release \
+            --no-build \
+            --output ./artifacts \
+            -p:PackageVersion="${{ steps.meta.outputs.tag }}" \
+            -p:IncludeSymbols=true \
+            -p:SymbolPackageFormat=snupkg
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.meta.outputs.package_id }}-packages
+          path: |
+            artifacts/*.nupkg
+            artifacts/*.snupkg
+          retention-days: 30
+
+      # ----------------------------------------------------------------
+      # Publishing is disabled by default.
+      # Uncomment and configure Trusted Publishing (or NUGET_API_KEY)
+      # when you are ready to push the first package.
+      # ----------------------------------------------------------------
+      #
+      # - name: NuGet login (Trusted Publishing / OIDC)
+      #   id: nuget-login
+      #   uses: NuGet/login@v1
+      #   with:
+      #     user: ${{ secrets.NUGET_USER }}   # optional depending on setup
+      #
+      # - name: Push to NuGet.org
+      #   run: |
+      #     dotnet nuget push artifacts/*.nupkg \
+      #       --api-key "${{ steps.nuget-login.outputs.NUGET_API_KEY }}" \
+      #       --source https://api.nuget.org/v3/index.json \
+      #       --skip-duplicate
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.meta.outputs.tag }}
+          name: ${{ steps.meta.outputs.package_id }} ${{ steps.meta.outputs.tag }}
+          generate_release_notes: true
+          files: |
+            artifacts/*.nupkg
+            artifacts/*.snupkg
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

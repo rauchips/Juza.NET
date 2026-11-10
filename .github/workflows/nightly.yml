@@ -1,0 +1,105 @@
+name: Nightly
+
+on:
+  schedule:
+    # 02:00 UTC every day
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: nightly
+  cancel-in-progress: false
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  detect:
+    name: Detect projects
+    runs-on: ubuntu-latest
+    outputs:
+      has_projects: ${{ steps.check.outputs.has_projects }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: check
+        run: |
+          if find . -name '*.csproj' -not -path './.git/*' | grep -q .; then
+            echo "has_projects=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_projects=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  # ------------------------------------------------------------------
+  # Dependency vulnerability scan (always useful)
+  # ------------------------------------------------------------------
+  dependency-audit:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+    needs: detect
+    if: needs.detect.outputs.has_projects == 'true'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: List vulnerable packages
+        run: |
+          # Emits a report; does not fail the job until you decide the policy is stable
+          dotnet list package --vulnerable --include-transitive 2>&1 | tee vulnerable-packages.txt || true
+          if grep -qi 'has the following vulnerable packages' vulnerable-packages.txt; then
+            echo "::warning::Vulnerable packages detected. Review vulnerable-packages.txt"
+          else
+            echo "No known vulnerable packages reported."
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vulnerable-packages-report
+          path: vulnerable-packages.txt
+          if-no-files-found: ignore
+          retention-days: 14
+
+  # ------------------------------------------------------------------
+  # Mutation testing (only when Core exists – expensive)
+  # ------------------------------------------------------------------
+  mutation:
+    name: Mutation testing (Core)
+    runs-on: ubuntu-latest
+    needs: detect
+    if: needs.detect.outputs.has_projects == 'true'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Run Stryker (if configured)
+        run: |
+          # Expects a stryker-config.json or Stryker to be a tool in the repo later.
+          # For now we only attempt the run when the tool is available.
+          if dotnet tool list -g | grep -q dotnet-stryker || \
+             dotnet tool restore 2>/dev/null; then
+            dotnet stryker --reporter "html" --reporter "cleartext" || true
+          else
+            echo "Stryker.NET not yet configured – skipping mutation run."
+            echo "Add a local tool manifest and stryker-config.json when Core is ready."
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: stryker-report
+          path: |
+            StrykerOutput/**/reports/**
+            **/mutation-report.html
+          if-no-files-found: ignore
+          retention-days: 14
