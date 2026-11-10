@@ -1,0 +1,209 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+
+jobs:
+  # ------------------------------------------------------------------
+  # Detect whether any .csproj files exist yet.
+  # This keeps the workflow green while the repo only contains docs.
+  # ------------------------------------------------------------------
+  detect:
+    name: Detect projects
+    runs-on: ubuntu-latest
+    outputs:
+      has_projects: ${{ steps.check.outputs.has_projects }}
+      has_solution: ${{ steps.check.outputs.has_solution }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check for .NET projects
+        id: check
+        run: |
+          if find . -name '*.csproj' -not -path './.git/*' | grep -q .; then
+            echo "has_projects=true" >> "$GITHUB_OUTPUT"
+            echo "Found one or more .csproj files"
+          else
+            echo "has_projects=false" >> "$GITHUB_OUTPUT"
+            echo "No .csproj files found – skipping build/test jobs"
+          fi
+
+          if find . -name '*.sln' -not -path './.git/*' | grep -q .; then
+            echo "has_solution=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_solution=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  # ------------------------------------------------------------------
+  # Lightweight always-on checks (docs, formatting of existing files)
+  # ------------------------------------------------------------------
+  lint-docs:
+    name: Lint docs & config
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check for secrets in tracked files
+        run: |
+          # Basic scan for common secret patterns (not a replacement for secret scanning)
+          if grep -RInE --exclude-dir=.git \
+            '(api[_-]?key|secret|password|token)\s*[:=]\s*["'\'']?[A-Za-z0-9_\-]{16,}' \
+            . 2>/dev/null; then
+            echo "::warning::Possible secret-like strings found. Review before merging."
+          else
+            echo "No obvious secret patterns found in tracked files."
+          fi
+
+      - name: Verify required community files exist
+        run: |
+          required=(
+            README.md
+            LICENSE
+            SECURITY.md
+            CONTRIBUTING.md
+            CODE_OF_CONDUCT.md
+            CHANGELOG.md
+          )
+          missing=0
+          for f in "${required[@]}"; do
+            if [[ ! -f "$f" ]]; then
+              echo "::error::Missing required file: $f"
+              missing=1
+            else
+              echo "✓ $f"
+            fi
+          done
+          if [[ $missing -ne 0 ]]; then
+            echo "Some required files are missing. Add them or adjust the list once the repo stabilises."
+            # Soft failure while the repo is still being bootstrapped
+            exit 0
+          fi
+
+  # ------------------------------------------------------------------
+  # Main build + test matrix (only when projects exist)
+  # ------------------------------------------------------------------
+  build-and-test:
+    name: Build & test (${{ matrix.os }} / ${{ matrix.dotnet }})
+    needs: detect
+    if: needs.detect.outputs.has_projects == 'true'
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        dotnet: ['8.0.x', '10.0.x']
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            ${{ matrix.dotnet }}
+            8.0.x
+            10.0.x
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --configuration Release --no-restore -p:TreatWarningsAsErrors=true
+
+      - name: Test
+        run: |
+          dotnet test --configuration Release --no-build \
+            --verbosity normal \
+            --collect:"XPlat Code Coverage" \
+            --results-directory ./coverage \
+            --logger "trx;LogFileName=test-results.trx"
+
+      - name: Upload coverage (Linux only)
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ matrix.os }}-${{ matrix.dotnet }}
+          path: coverage/
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.os }}-${{ matrix.dotnet }}
+          path: '**/test-results.trx'
+          if-no-files-found: ignore
+          retention-days: 7
+
+  # ------------------------------------------------------------------
+  # Format check (Linux only, when projects exist)
+  # ------------------------------------------------------------------
+  format:
+    name: Format check
+    needs: detect
+    if: needs.detect.outputs.has_projects == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Check formatting
+        run: dotnet format --verify-no-changes --verbosity diagnostic
+
+  # ------------------------------------------------------------------
+  # Pack (produces nupkgs as artifacts – does not publish)
+  # ------------------------------------------------------------------
+  pack:
+    name: Pack
+    needs: [detect, build-and-test]
+    if: needs.detect.outputs.has_projects == 'true' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore & pack
+        run: |
+          dotnet restore
+          dotnet pack --configuration Release --no-restore --output ./artifacts
+
+      - name: Upload packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuget-packages
+          path: ./artifacts/*.nupkg
+          if-no-files-found: ignore
+          retention-days: 14
