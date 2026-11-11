@@ -21,7 +21,7 @@ jobs:
     outputs:
       has_projects: ${{ steps.check.outputs.has_projects }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - id: check
         run: |
           if find . -name '*.csproj' -not -path './.git/*' | grep -q .; then
@@ -39,9 +39,9 @@ jobs:
     needs: detect
     if: needs.detect.outputs.has_projects == 'true'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: '10.0.x'
 
@@ -58,7 +58,7 @@ jobs:
             echo "No known vulnerable packages reported."
           fi
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: vulnerable-packages-report
           path: vulnerable-packages.txt
@@ -74,9 +74,9 @@ jobs:
     needs: detect
     if: needs.detect.outputs.has_projects == 'true'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: '10.0.x'
 
@@ -95,7 +95,7 @@ jobs:
             echo "Add a local tool manifest and stryker-config.json when Core is ready."
           fi
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: stryker-report
           path: |
