@@ -58,7 +58,7 @@ jobs:
             echo "No known vulnerable packages reported."
           fi
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: vulnerable-packages-report
           path: vulnerable-packages.txt
@@ -95,7 +95,7 @@ jobs:
             echo "Add a local tool manifest and stryker-config.json when Core is ready."
           fi
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: stryker-report
           path: |
