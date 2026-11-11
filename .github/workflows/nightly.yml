@@ -21,7 +21,7 @@ jobs:
     outputs:
       has_projects: ${{ steps.check.outputs.has_projects }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - id: check
         run: |
           if find . -name '*.csproj' -not -path './.git/*' | grep -q .; then
@@ -39,9 +39,9 @@ jobs:
     needs: detect
     if: needs.detect.outputs.has_projects == 'true'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: '10.0.x'
 
@@ -74,9 +74,9 @@ jobs:
     needs: detect
     if: needs.detect.outputs.has_projects == 'true'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: '10.0.x'
 

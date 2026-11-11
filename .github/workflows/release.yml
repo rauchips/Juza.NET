@@ -43,7 +43,7 @@ jobs:
     environment: release   # protect this environment in repo settings
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -74,7 +74,7 @@ jobs:
           echo "Releasing $PACKAGE_ID from $PROJECT (tag $TAG)"
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v6
         with:
           dotnet-version: |
             8.0.x
