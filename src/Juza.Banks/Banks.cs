@@ -1,4 +1,4 @@
-﻿namespace Juza.Banks;
+namespace Juza.Banks;
 
 /// <summary>The kind of institution a directory entry represents.</summary>
 public enum BankType
