@@ -2,9 +2,9 @@ name: CodeQL
 
 on:
   push:
-    branches: [main]
+    branches: [ main ]
   pull_request:
-    branches: [main]
+    branches: [ main ]
   schedule:
     # Weekly on Monday at 06:00 UTC
     - cron: '0 6 * * 1'
@@ -27,11 +27,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: [csharp]
+        language: [ csharp ]
 
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          fetch-depth: '0'
 
       - name: Detect C# projects
         id: detect

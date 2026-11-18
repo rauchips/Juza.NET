@@ -11,10 +11,7 @@ Each package is versioned independently. Release tags use a package prefix
 ## [Unreleased]
 
 ### Added
-- Project scaffolding and documentation
-- Decision engine design and rule format specification
-- Bank directory model including official bank paybills
-- Curated paybill directory (`Juza.Paybills`)
+- `Juza.Banks`: bank directory (44 institutions, no paybills) with lookup by code and id, search, and JSON schema. Pesalink participation is `unknown` and six entries are `unverified` until checked against CBK.
 
 ### Notes
 - Pre-1.0 versions may introduce breaking changes between minor releases.
