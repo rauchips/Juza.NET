@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/juza-logo.svg" width="256" alt="Juza.NET logo" />
+</p>
+
 # Juza.NET
 
 **A .NET toolkit that turns Kenyan payment provider responses into safe decisions.**
