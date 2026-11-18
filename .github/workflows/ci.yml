@@ -128,6 +128,7 @@ jobs:
         run: dotnet build --configuration Release --no-restore -p:TreatWarningsAsErrors=true
 
       - name: Test
+        shell: bash
         run: |
           dotnet test --configuration Release --no-build \
             --verbosity normal \
