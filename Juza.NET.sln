@@ -16,6 +16,13 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Juza.Banks.Tests", "tests\J
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Juza.Paybills.Tests", "tests\Juza.Paybills.Tests\Juza.Paybills.Tests.csproj", "{3EC8CE61-73DF-43E5-9E06-8EE69F451E98}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "data", "data", "{A355D17E-F17F-4712-AD58-604483B93A11}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "banks", "banks", "{86CAE348-5EC0-40E1-9BE5-7586C901AF49}"
+	ProjectSection(SolutionItems) = preProject
+		data\banks\banks.json = data\banks\banks.json
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -28,6 +35,7 @@ Global
 		{57CBBF21-0791-466E-9BE6-255F0044930D} = {0EA65E5A-10C4-48AB-BB7A-D52E80A57257}
 		{3757B437-6FA4-441D-97E6-9E5B2E9AEC13} = {0EA65E5A-10C4-48AB-BB7A-D52E80A57257}
 		{3EC8CE61-73DF-43E5-9E06-8EE69F451E98} = {0EA65E5A-10C4-48AB-BB7A-D52E80A57257}
+		{86CAE348-5EC0-40E1-9BE5-7586C901AF49} = {A355D17E-F17F-4712-AD58-604483B93A11}
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{535704B4-B189-4DA1-AEC6-4D3D5A2B7C09}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
